@@ -32,3 +32,13 @@ Route.delete('users/:id', 'UsersController.destroy').middleware('auth')
 Route.post('users/login', 'UsersController.login')
 Route.post('users/logout/:id', 'UsersController.logout').middleware('auth')
 Route.post('users', 'UsersController.store')
+
+Route.post('games', 'GamesController.store').middleware(['auth', 'isAdmin'])
+Route.put('games/:id', 'GamesController.update').middleware(['auth', 'isAdmin'])
+Route.delete('games/:id', 'GamesController.destroy').middleware(['auth', 'isAdmin'])
+Route.get('games/:id', 'GamesController.show').middleware('auth')
+Route.get('games', 'GamesController.index').middleware('auth')
+
+Route.get('users/bets/all', 'BetsController.index').middleware('auth')
+Route.get('users/bets/:id', 'BetsController.show').middleware('auth')
+Route.post('bets', 'BetsController.store').middleware('auth')

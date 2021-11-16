@@ -3,7 +3,7 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 
 export default class UsersController {
-  public async store({ request, response, auth }: HttpContextContract) {
+  public async store({ auth, request, response }: HttpContextContract) {
     const email = request.input('email')
     const password = request.input('password')
 
@@ -37,7 +37,7 @@ export default class UsersController {
     }
   }
 
-  public async login({ request, response, auth }: HttpContextContract){
+  public async login({ auth, request, response }: HttpContextContract){
     const email = request.input('email')
     const password = request.input('password')
 
@@ -82,7 +82,7 @@ export default class UsersController {
     }
   }
 
-  public async destroy({ request, auth, response }: HttpContextContract) {
+  public async destroy({ auth, request, response }: HttpContextContract) {
     try {
       if(auth.isLoggedIn  && auth.user?.id === +request.param('id')){
         const user = await User.findByOrFail('id', request.param('id'))
