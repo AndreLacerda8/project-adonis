@@ -25,6 +25,10 @@ Route.get('/', async () => {
 })
 
 
-Route.resource('/users', 'UsersController').only(['show', 'update', 'destroy'])//.auth
+// Route.resource('/users', 'UsersController').only(['show', 'update', 'destroy'])
+Route.get('users/:id', 'UsersController.show').middleware('auth')
+Route.put('users/:id', 'UsersController.update').middleware('auth')
+Route.delete('users/:id', 'UsersController.destroy').middleware('auth')
 Route.post('users/login', 'UsersController.login')
+Route.post('users/logout/:id', 'UsersController.logout').middleware('auth')
 Route.post('users', 'UsersController.store')
