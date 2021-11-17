@@ -1,7 +1,9 @@
+import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Bet from 'App/Models/Bet'
 import Game from 'App/Models/Game'
+import User from 'App/Models/User'
 
 export default class BetsController {
     public async index({ auth }: HttpContextContract){
@@ -45,6 +47,23 @@ export default class BetsController {
                 return { 'user_id': auth.user?.id, ...bet }
             })
             await Bet.createMany(formatedBets)
+
+            const user = await User.find(formatedBets[0]['user_id'])
+
+            if(user){
+                await Mail.sendLater(message => {
+                    message
+                        .from('mail@example.com')
+                        .to(user.email)
+                        .subject('Nova aposta')
+                        .html(`
+                        <h1> Você fez uma nova aposta </h1>
+                        <p>
+                            Você acabou de realizar novas apostas no valor de R$${price.toFixed(2).replace('.',',')}
+                        </p>`)
+                })
+            }
+
             return formatedBets
         } catch {
             return 'Error'

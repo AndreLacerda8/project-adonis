@@ -1,5 +1,5 @@
+import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-// import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 import User from 'App/Models/User'
 import CreateUserValidator from 'App/Validators/CreateUserValidator'
@@ -9,18 +9,38 @@ export default class UsersController {
   public async store({ auth, request, response }: HttpContextContract) {
     await request.validate(CreateUserValidator)
 
-    const { email, password } = request.body()
+    const { username, email, password } = request.body()
 
     try{
+      const alreadyExists = await User.findBy('email', email)
+      if(alreadyExists){
+        return response.send('Email already registered')
+      }
       await User.create({
+        username,
         email,
         password
       })
+
+      await Mail.sendLater(message => {
+        message
+          .from('mail@example.com')
+          .to(email)
+          .subject('Bem vindo ao Lottery')
+          .html(`
+          <h1> Seja bem-vindo ${username} </h1>
+          <p>
+              Seu cadastro foi feito com sucesso, agora você pode aproveitar ao maximo nosso site
+          </p>`
+          )
+      })
+
       const user = await User.findBy('email', email)
       const token = await auth.use('api').attempt(email, password, {
         expiresIn: '1day',
         name: user?.serialize().email
       })
+
       return {token, user: user?.serialize()}
     } catch {
         return response.badRequest('Invalid Credentials')
@@ -29,10 +49,12 @@ export default class UsersController {
 
   public async show({ auth, request, response }: HttpContextContract) {
     try{
-        if(auth.isLoggedIn && auth.user?.id === +request.param('id')){
-        const { user } = auth
+      if(auth.isLoggedIn && auth.user?.id === +request.param('id')){
+        const user = await User.find(request.param('id'))
+        const bets = await user?.related('bet').query()
         return {
-          user
+          user,
+          bets
         }
       }
       return response.status(403).badRequest('Unauthorized')

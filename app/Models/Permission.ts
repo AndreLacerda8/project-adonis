@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, BelongsTo, belongsTo, column } from '@ioc:Adonis/Lucid/Orm'
+import UsersPermission from 'App/Models/UsersPermission'
 
 export default class Permission extends BaseModel {
   @column({ isPrimary: true })
@@ -13,4 +14,7 @@ export default class Permission extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  @belongsTo(() => UsersPermission)
+  public usersPermission: BelongsTo<typeof UsersPermission>
 }
