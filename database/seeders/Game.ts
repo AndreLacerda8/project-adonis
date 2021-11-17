@@ -3,7 +3,9 @@ import Game from 'App/Models/Game'
 
 export default class GameSeeder extends BaseSeeder {
   public async run () {
-    await Game.createMany([
+    const uniqueKey = 'type'
+
+    await Game.updateOrCreateMany(uniqueKey, [
       {
         type: "Lotofácil",
         description: "Escolha 15 números para apostar na lotofácil. Você ganha acertando 11, 12, 13, 14 ou 15 números. São muitas chances de ganhar, e agora você joga de onde estiver!",

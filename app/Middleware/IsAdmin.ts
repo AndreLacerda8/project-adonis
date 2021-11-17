@@ -9,7 +9,7 @@ export default class LogRequest {
     try{
       if(auth.isLoggedIn){
         const userPermission = await UsersPermission.findBy('user_id', auth.user?.id)
-        const permission = await Permission.findBy('id', userPermission?.permission_id)
+        const permission = await Permission.findBy('id', userPermission?.permissionId)
         if(permission?.name === 'admin'){
           await next()
         }

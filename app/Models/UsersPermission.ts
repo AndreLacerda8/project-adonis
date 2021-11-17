@@ -6,10 +6,10 @@ export default class UsersPermission extends BaseModel {
   public id: number
 
   @column()
-  public user_id: number
+  public userId: number
 
   @column()
-  public permission_id: number
+  public permissionId: number
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime
