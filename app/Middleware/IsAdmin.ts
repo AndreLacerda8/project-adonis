@@ -9,16 +9,13 @@ export default class LogRequest {
     try{
       if(auth.isLoggedIn){
         const userPermission = await UsersPermission.findBy('user_id', auth.user?.id)
-        const permission = await Permission.findBy('id', userPermission?.permissionId)
+        const permission = await Permission.findByOrFail('id', userPermission?.permissionId)
         if(permission?.name === 'admin'){
           await next()
         }
-        else {
-          return response.status(403).send('Unauthorized')
-        }
       }
     } catch {
-      return response.send('Error')
+      return response.status(403).send('Unauthorized')
     }
   }
 }

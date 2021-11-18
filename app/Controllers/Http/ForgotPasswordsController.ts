@@ -46,7 +46,7 @@ export default class ForgotPasswordsController {
             user.password = password
             await user.save()
         } catch(err){
-            return response.status(err.status).send('Algo deu errado')
+            return response.status(err.status).send('Algo deu errado, esse é o token válido mesmo?')
         }
     }
 }

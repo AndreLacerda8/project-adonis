@@ -4,8 +4,12 @@ import Game from 'App/Models/Game'
 import GameValidator from 'App/Validators/GameValidator'
 
 export default class GamesController {
-    public async index({}: HttpContextContract){
-        return Game.all()
+    public async index({response}: HttpContextContract){
+        try{
+            return Game.all()
+        } catch(err){
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
+        }
     }
 
     public async store({ request, response }: HttpContextContract) {
@@ -16,8 +20,8 @@ export default class GamesController {
             await Game.create(game)
     
             return game
-        } catch {
-            response.send('Error')
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
@@ -47,8 +51,8 @@ export default class GamesController {
                 game.save()
                 return game
             }
-        } catch {
-            response.send('Error')
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
@@ -60,8 +64,8 @@ export default class GamesController {
                 return 'Game deleted successfully'
             }
             return response.status(404).send('Game not found')
-        } catch {
-            response.send('Error')
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 }

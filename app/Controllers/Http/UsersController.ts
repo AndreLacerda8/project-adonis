@@ -1,5 +1,6 @@
 import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import { AuthContract } from '@ioc:Adonis/Addons/Auth'
 
 import User from 'App/Models/User'
 import Game from 'App/Models/Game'
@@ -36,17 +37,21 @@ export default class UsersController {
           </p>`
           )
       })
+      return this.createToken(auth, email, password)
+    } catch(err) {
+      return response.status(err.status).send('Ocorreu algum erro inesperado')
+    }
+  }
 
-      const user = await User.findBy('email', email)
-      const token = await auth.use('api').attempt(email, password, {
+  private async createToken(auth: AuthContract, email: string,  password:string){
+    const user = await User.findBy('email', email)
+    if(!user)
+      throw new Error('User not found')
+    const token = await auth.use('api').attempt(email, password, {
         expiresIn: '1day',
         name: user?.serialize().email
-      })
-
-      return {token, user: user?.serialize()}
-    } catch {
-        return response.badRequest('Invalid Credentials')
-    }
+    })
+    return {token, user: user?.serialize()}
   }
 
   public async show({ auth, request, response }: HttpContextContract) {
@@ -75,8 +80,8 @@ export default class UsersController {
         }
       }
       return response.status(403).badRequest('Unauthorized')
-    } catch {
-      return response.badRequest('Error')
+    } catch(err) {
+      return response.status(err.status).send('Ocorreu algum erro inesperado')
     }
   }
 
@@ -87,12 +92,7 @@ export default class UsersController {
     const password = request.input('password')
 
     try{
-      const user = await User.findBy('email', email)
-      const token = await auth.use('api').attempt(email, password, {
-          expiresIn: '1day',
-          name: user?.serialize().email
-      })
-      return {token, user: user?.serialize()}
+      return this.createToken(auth, email, password)
     } catch {
         return response.badRequest('Invalid Credentials')
     }
@@ -106,8 +106,8 @@ export default class UsersController {
       } else {
         return response.status(403).badRequest('Unauthorized')
       }
-    } catch {
-      return response.badRequest('Error')
+    } catch(err) {
+      return response.status(err.status).send('Ocorreu algum erro inesperado')
     }
   }
 
@@ -122,8 +122,8 @@ export default class UsersController {
         return user
       }
       return response.status(403).badRequest('Unauthorized')
-    } catch {
-      return response.badRequest('Error')
+    } catch(err) {
+      return response.status(err.status).send('Ocorreu algum erro inesperado')
     }
   }
 
@@ -135,8 +135,8 @@ export default class UsersController {
         return response.json('User deleted successfully')
       }
       return response.status(403).badRequest('Unauthorized')
-    } catch {
-      return response.badRequest('Error')
+    } catch(err) {
+      return response.status(err.status).send('Ocorreu algum erro inesperado')
     }
   }
 }

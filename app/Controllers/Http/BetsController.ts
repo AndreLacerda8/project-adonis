@@ -6,24 +6,25 @@ import Game from 'App/Models/Game'
 import User from 'App/Models/User'
 
 export default class BetsController {
-    public async index({ auth }: HttpContextContract){
+    public async index({ auth, response }: HttpContextContract){
         try{
-            const bets = await Bet.query().where('user_id', '=', auth.user?.id + '')
+            const user = await User.find(auth.user?.id)
+            const bets = await user?.related('bet').query()
             return bets
-        } catch {
-            return 'Error'
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
-    public async show({ auth, request }: HttpContextContract){
+    public async show({ auth, request, response }: HttpContextContract){
         try{
             const bets = await Bet.query().where('user_id', '=', auth.user?.id + '')
             const bet = bets.filter(bet => {
                 return bet.id === +request.param('id')
             })
             return bet
-        } catch {
-            return 'Error'
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
@@ -65,8 +66,8 @@ export default class BetsController {
             }
 
             return formatedBets
-        } catch {
-            return 'Error'
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
@@ -83,8 +84,8 @@ export default class BetsController {
             } else {
                 return response.status(403).send('Unauthorized')
             }
-        } catch {
-            return response.send('Error')
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 
@@ -98,8 +99,8 @@ export default class BetsController {
             } else {
                 return response.status(403).send('Unauthorized')
             }
-        } catch {
-            return response.send('Error')
+        } catch(err) {
+            return response.status(err.status).send('Ocorreu algum erro inesperado')
         }
     }
 }
