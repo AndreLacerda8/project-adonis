@@ -2,8 +2,10 @@ import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import User from 'App/Models/User'
+import Game from 'App/Models/Game'
 import CreateUserValidator from 'App/Validators/CreateUserValidator'
 import LoginUserValidator from 'App/Validators/LoginUserValidator'
+import moment from 'moment'
 
 export default class UsersController {
   public async store({ auth, request, response }: HttpContextContract) {
@@ -52,9 +54,24 @@ export default class UsersController {
       if(auth.isLoggedIn && auth.user?.id === +request.param('id')){
         const user = await User.find(request.param('id'))
         const bets = await user?.related('bet').query()
+        const games = await Game.all()
+        const formatedBets = bets?.map(bet => {
+          const betInLastMonth = moment().subtract('1', 'month').isBefore(`${bet.createdAt}`)
+          if(betInLastMonth){
+            return {
+              type: games[+bet.gameId - 1].type,
+              numbers: bet.numbers,
+              price: games[+bet.gameId - 1].price
+            }
+          }
+          return false
+        })
         return {
-          user,
-          bets
+          user: {
+            username: user?.username,
+            email: user?.email,
+          },
+          bets: formatedBets?.filter(bet => bet !== false)
         }
       }
       return response.status(403).badRequest('Unauthorized')

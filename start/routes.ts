@@ -44,3 +44,6 @@ Route.get('users/bets/:id', 'BetsController.show').middleware('auth')
 Route.post('bets', 'BetsController.store').middleware('auth')
 Route.put('bets/:id', 'BetsController.update').middleware('auth')
 Route.delete('bets/:id', 'BetsController.destroy').middleware('auth')
+
+Route.post('forgot_password', 'ForgotPasswordsController.store')
+Route.put('forgot_password', 'ForgotPasswordsController.update')
