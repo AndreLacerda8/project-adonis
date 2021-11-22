@@ -20,6 +20,10 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
+Route.get('/', () => {
+  return 'Hello World'
+})
+
 Route.group(() => {
   Route.post('', 'UsersController.store')
   Route.post('login', 'UsersController.login')

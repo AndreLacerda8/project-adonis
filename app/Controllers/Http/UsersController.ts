@@ -9,6 +9,17 @@ import LoginUserValidator from 'App/Validators/LoginUserValidator'
 import moment from 'moment'
 
 export default class UsersController {
+  private async createToken(auth: AuthContract, email: string,  password:string){
+    const user = await User.findBy('email', email)
+    if(!user)
+      throw new Error('User not found')
+    const token = await auth.use('api').attempt(email, password, {
+        expiresIn: '1day',
+        name: user?.serialize().email
+    })
+    return {token, user: user?.serialize()}
+  }
+
   public async store({ auth, request, response }: HttpContextContract) {
     await request.validate(CreateUserValidator)
 
@@ -17,7 +28,7 @@ export default class UsersController {
     try{
       const alreadyExists = await User.findBy('email', email)
       if(alreadyExists){
-        return response.send('Email already registered')
+        return response.badRequest('Email already registered')
       }
       await User.create({
         username,
@@ -41,17 +52,6 @@ export default class UsersController {
     } catch(err) {
       return response.status(err.status).send('Ocorreu algum erro inesperado')
     }
-  }
-
-  private async createToken(auth: AuthContract, email: string,  password:string){
-    const user = await User.findBy('email', email)
-    if(!user)
-      throw new Error('User not found')
-    const token = await auth.use('api').attempt(email, password, {
-        expiresIn: '1day',
-        name: user?.serialize().email
-    })
-    return {token, user: user?.serialize()}
   }
 
   public async show({ auth, request, response }: HttpContextContract) {

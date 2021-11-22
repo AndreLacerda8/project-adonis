@@ -1,0 +1,37 @@
+version: '3.8'
+
+networks:
+  luby_project:
+    external: true
+
+volumes:
+  db-data:
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/api/Dockerfile
+    ports:
+      - "3333:3333"
+    working_dir: /usr/app
+    volumes:
+      - .:/usr/app
+    networks:
+      - luby_project
+    depends_on:
+      - mysql
+
+  mysql:
+    build:
+      context: ./docker/db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: prova_adonis
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - luby_project
