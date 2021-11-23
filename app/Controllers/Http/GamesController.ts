@@ -1,4 +1,5 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Cart from 'App/Models/Cart'
 
 import Game from 'App/Models/Game'
 import GameValidator from 'App/Validators/GameValidator'
@@ -6,9 +7,24 @@ import GameValidator from 'App/Validators/GameValidator'
 export default class GamesController {
     public async index({response}: HttpContextContract){
         try{
-            return Game.all()
+            const games = await Game.all()
+            const configCart = await Cart.findByOrFail('config', 'min-cart-value')
+            const gamesFormated = games.map(game => {
+                return {
+                    type: game.type,
+                    description: game.description,
+                    range: game.range,
+                    price: game.price,
+                    'max-number': game.maxNumber,
+                    color: game.color
+                }
+            })
+            return response.status(200).json({
+                "min-cart-value": +configCart.value,
+                types: gamesFormated
+            })
         } catch(err){
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 
@@ -18,10 +34,16 @@ export default class GamesController {
         try {
             const game = request.body()
             await Game.create(game)
-    
-            return game
+            return {
+                type: game.type,
+                description: game.description,
+                range: game.range,
+                price: game.price,
+                'max-number': game.maxNumber,
+                color: game.color
+            }
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 
@@ -29,9 +51,16 @@ export default class GamesController {
         try{
             const id = request.param('id')
             const game = await Game.findOrFail(id)
-            return game
+            return response.status(200).json({
+                type: game.type,
+                description: game.description,
+                range: game.range,
+                price: game.price,
+                'max-number': game.maxNumber,
+                color: game.color
+            })
         } catch {
-            return response.status(404).send('Game not found')
+            return response.status(404).json({ message: 'Game not found' })
         }
     }
 
@@ -40,7 +69,7 @@ export default class GamesController {
         
         try{
             const changeGame = request.body()
-            const game = await Game.findBy('id', request.param('id'))
+            const game = await Game.findByOrFail('id', request.param('id'))
             if(game){
                 game.type = changeGame.type
                 game.description = changeGame.description
@@ -49,10 +78,17 @@ export default class GamesController {
                 game.maxNumber = changeGame.maxNumber
                 game.color = changeGame.color
                 game.save()
-                return game
+                return {
+                    type: game.type,
+                    description: game.description,
+                    range: game.range,
+                    price: game.price,
+                    'max-number': game.maxNumber,
+                    color: game.color
+                }
             }
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Game not Found' })
         }
     }
 
@@ -61,11 +97,11 @@ export default class GamesController {
             const game = await Game.findBy('id', request.param('id'))
             if(game){
                 await game.delete()
-                return 'Game deleted successfully'
+                return response.status(200).json({ message: 'Game deleted successfully' })
             }
-            return response.status(404).send('Game not found')
+            return response.status(404).send({ message: 'Game not found' })
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 }

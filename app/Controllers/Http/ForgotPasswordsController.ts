@@ -26,8 +26,10 @@ export default class ForgotPasswordsController {
                         <a href="${request.input('redirect_url')}?token=${user.tokenForgotPassword}">Recuperar senha</a>
                     `)
             })
+
+            return response.status(200).json({ message: 'Password recovery email sent' })
         } catch(err) {
-            return response.status(err.status).send('Algo deu errado, esse é o email correto?')
+            return response.status(err.status).json({ message: 'Occurred an error, this is correct email?' })
         }
     }
 
@@ -38,15 +40,16 @@ export default class ForgotPasswordsController {
             const user = await User.findByOrFail('token_forgot_password', token)
             const tokenExpired = moment().subtract('1', 'days').isAfter(user.tokenForgotPasswordCreatedAt)
             if(tokenExpired){
-                return response.status(401).send('Token de recuperação de senha expirado')
+                return response.status(401).json({ message: 'Token expired' })
             }
 
             user.tokenForgotPassword = null
             user.tokenForgotPasswordCreatedAt = null
             user.password = password
             await user.save()
+            return response.status(200).json({ message: 'Password changed successfully' })
         } catch(err){
-            return response.status(err.status).send('Algo deu errado, esse é o token válido mesmo?')
+            return response.status(err.status).json({ message: 'Occurred an error, this is valid token?' })
         }
     }
 }

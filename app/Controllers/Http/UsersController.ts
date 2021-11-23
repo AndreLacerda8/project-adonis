@@ -7,17 +7,33 @@ import Game from 'App/Models/Game'
 import CreateUserValidator from 'App/Validators/CreateUserValidator'
 import LoginUserValidator from 'App/Validators/LoginUserValidator'
 import moment from 'moment'
+import UsersPermission from 'App/Models/UsersPermission'
+import Permission from 'App/Models/Permission'
 
 export default class UsersController {
-  private async createToken(auth: AuthContract, email: string,  password:string){
-    const user = await User.findBy('email', email)
-    if(!user)
-      throw new Error('User not found')
-    const token = await auth.use('api').attempt(email, password, {
-        expiresIn: '1day',
-        name: user?.serialize().email
+  private async createToken(auth: AuthContract, email: string,  password:string, response){
+    try{
+      const user = await User.findByOrFail('email', email)
+      const token = await auth.use('api').attempt(email, password, {
+          expiresIn: '1day',
+          name: user?.serialize().email
+      })
+      return {token, user: user?.serialize()}
+    } catch {
+      return response.status(404).json({ message: 'User not Found' })
+    }
+  }
+
+  private async getPermissions(user: User){
+    const allPermissions = await Permission.all()
+    const permissionsName = allPermissions.map(permission => {
+      return { id: permission.id, name: permission.name }
     })
-    return {token, user: user?.serialize()}
+    const permissions = await UsersPermission.query().where('id', '=', user.id)
+    return permissions.map(permission => {
+      const { name } = permissionsName.filter(permissionName => permissionName.id === permission.id)[0]
+      return name
+    })
   }
 
   public async store({ auth, request, response }: HttpContextContract) {
@@ -28,7 +44,7 @@ export default class UsersController {
     try{
       const alreadyExists = await User.findBy('email', email)
       if(alreadyExists){
-        return response.badRequest('Email already registered')
+        return response.badRequest({ message: 'Email already registered' })
       }
       await User.create({
         username,
@@ -48,16 +64,23 @@ export default class UsersController {
           </p>`
           )
       })
-      return this.createToken(auth, email, password)
+      const {token, user} = await this.createToken(auth, email, password, response)
+      response.status(200).json({
+        token,
+        user: {
+          username: user.username,
+          email: user.email
+        }
+      })
     } catch(err) {
-      return response.status(err.status).send('Ocorreu algum erro inesperado')
+      return response.status(err.status).json({ message: 'Occurred unexpected error'})
     }
   }
 
   public async show({ auth, request, response }: HttpContextContract) {
     try{
       if(auth.isLoggedIn && auth.user?.id === +request.param('id')){
-        const user = await User.find(request.param('id'))
+        const user = await User.findOrFail(request.param('id'))
         const bets = await user?.related('bet').query()
         const games = await Game.all()
         const formatedBets = bets?.map(bet => {
@@ -71,17 +94,19 @@ export default class UsersController {
           }
           return false
         })
+        const permissions = await this.getPermissions(user)
         return {
           user: {
             username: user?.username,
             email: user?.email,
+            permissions
           },
           bets: formatedBets?.filter(bet => bet !== false)
         }
       }
-      return response.status(403).badRequest('Unauthorized')
+      return response.status(403).json({ message: 'Unauthorized' })
     } catch(err) {
-      return response.status(err.status).send('Ocorreu algum erro inesperado')
+      return response.status(err.status).json({ message: 'User not Found'})
     }
   }
 
@@ -92,9 +117,18 @@ export default class UsersController {
     const password = request.input('password')
 
     try{
-      return this.createToken(auth, email, password)
+      const {token, user} = await this.createToken(auth, email, password, response)
+      const permissionsFormated = await this.getPermissions(user)
+      response.status(200).json({
+        token,
+        user: {
+          username: user.username,
+          email: user.email,
+          permissions: permissionsFormated
+        }
+      })
     } catch {
-        return response.badRequest('Invalid Credentials')
+      return response.status(404).json({ message: 'User not Found' })
     }
   }
 
@@ -102,28 +136,35 @@ export default class UsersController {
     try{
       if(auth.isLoggedIn && auth.user?.id === +request.param('id')){
         await auth.use('api').revoke()
-        return response.json('Logout occurred successfully')
+        return response.status(200).json({ message: 'Logout occurred successfully' })
       } else {
-        return response.status(403).badRequest('Unauthorized')
+        return response.status(403).json({ message: 'Unauthorized' })
       }
     } catch(err) {
-      return response.status(err.status).send('Ocorreu algum erro inesperado')
+      return response.status(err.status).json({ message: 'Occurred unexpected error'})
     }
   }
 
   public async update({ auth, request, response }: HttpContextContract) {
     try {
       if(auth.isLoggedIn  && auth.user?.id === +request.param('id')){
-        const { email, password } = request.body()
+        const { username, email, password } = request.body()
         const user = await User.findByOrFail('id', request.param('id'))
+        user.username = username
         user.email = email
         user.password = password
         await user.save()
-        return user
+        return response.status(200).json({
+          message: 'User updated successfully',
+          user: {
+            username: user.username,
+            email: user.email
+          }
+        })
       }
-      return response.status(403).badRequest('Unauthorized')
+      return response.status(403).json({ message: 'Unauthorized' })
     } catch(err) {
-      return response.status(err.status).send('Ocorreu algum erro inesperado')
+      return response.status(err.status).json({ message: 'Occurred unexpected error'})
     }
   }
 
@@ -132,11 +173,11 @@ export default class UsersController {
       if(auth.isLoggedIn  && auth.user?.id === +request.param('id')){
         const user = await User.findByOrFail('id', request.param('id'))
         await user.delete()
-        return response.json('User deleted successfully')
+        return response.status(200).json({ message: 'User deleted successfully' })
       }
-      return response.status(403).badRequest('Unauthorized')
+      return response.status(403).json({ message: 'Unauthorized' })
     } catch(err) {
-      return response.status(err.status).send('Ocorreu algum erro inesperado')
+      return response.status(err.status).json({ message: 'Occurred unexpected error'})
     }
   }
 }

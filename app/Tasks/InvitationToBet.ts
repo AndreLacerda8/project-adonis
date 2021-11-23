@@ -5,7 +5,7 @@ import moment from 'moment'
 
 export default class InvitationToBet extends BaseTask {
 	public static get schedule() {
-		return '0 0 9 * * *'
+		return '0 18 10 * * *'
 	}
 	/**
 	 * Set enable use .lock file for block run retry task
@@ -16,7 +16,6 @@ export default class InvitationToBet extends BaseTask {
 	}
 
 	public async handle() {
-		console.log('rodou')
 		const users = await User.all()
 		const usersToSendMail: User[] = []
 		for(let user of users){

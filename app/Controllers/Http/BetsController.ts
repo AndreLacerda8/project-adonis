@@ -10,9 +10,18 @@ export default class BetsController {
         try{
             const user = await User.find(auth.user?.id)
             const bets = await user?.related('bet').query()
-            return bets
+            const games = await Game.all()
+            const betsFormated = bets?.map(bet => {
+                const game = games.filter(game => game.id === bet.gameId)[0]
+                return {
+                    type: game.type,
+                    numbers: bet.numbers,
+                    price: game.price
+                }
+            })
+            return response.status(200).json(betsFormated)
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 
@@ -21,10 +30,15 @@ export default class BetsController {
             const bets = await Bet.query().where('user_id', '=', auth.user?.id + '')
             const bet = bets.filter(bet => {
                 return bet.id === +request.param('id')
+            })[0]
+            const game = await Game.findOrFail(bet.userId)
+            return response.status(200).json({
+                type: game.type,
+                numbers: bet.numbers,
+                price: game.price
             })
-            return bet
-        } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+        } catch {
+            return response.status(404).json({ message: 'Bet not found' })
         }
     }
 
@@ -42,7 +56,7 @@ export default class BetsController {
                 return acc + (+currentPrice)
             }, 0)
             if(price < 30){
-                return response.send('Minimum price (R$30,00) not reached')
+                return response.status(422).json({ message: 'Minimum price (R$30,00) not reached' })
             }
             const formatedBets = bets.map(bet => {
                 return { 'user_id': auth.user?.id, ...bet }
@@ -65,9 +79,17 @@ export default class BetsController {
                 })
             }
 
-            return formatedBets
+            return response.status(200).json(
+                formatedBets.map(bet => {
+                    const game = games.filter(game => game.id === +bet['game_id'])[0]
+                    return {
+                        type: game.type,
+                        numbers: bet.numbers
+                    }
+                })
+            )
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 
@@ -76,16 +98,21 @@ export default class BetsController {
             const betId = request.param('id')
             const { gameId, numbers } = request.body()
             const bet = await Bet.findOrFail(betId)
+            const game = await Game.findOrFail(bet.userId)
             if(bet.userId === auth.user?.id){
                 bet.gameId = gameId
                 bet.numbers = numbers
                 bet.save()
-                return bet
+                return response.status(200).json({
+                    type: game.type,
+                    numbers: bet.numbers,
+                    price: game.price
+                })
             } else {
-                return response.status(403).send('Unauthorized')
+                return response.status(403).json({ message: 'Unauthorized' })
             }
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 
@@ -95,12 +122,12 @@ export default class BetsController {
             const bet = await Bet.findOrFail(betId)
             if(bet.userId === auth.user?.id){
                 bet.delete()
-                return response.send('Bet deleted successfully')
+                return response.status(200).json({ message: 'Bet deleted successfully' })
             } else {
-                return response.status(403).send('Unauthorized')
+                return response.status(403).json({ message: 'Unauthorized' })
             }
         } catch(err) {
-            return response.status(err.status).send('Ocorreu algum erro inesperado')
+            return response.status(err.status).json({ message: 'Occurred unexpected error' })
         }
     }
 }
