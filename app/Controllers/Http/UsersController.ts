@@ -106,7 +106,7 @@ export default class UsersController {
       }
       return response.status(403).json({ message: 'Unauthorized' })
     } catch(err) {
-      return response.status(err.status).json({ message: 'User not Found'})
+      return response.status(err.status || 400).json({ message: 'User not Found', originalError: err.message })
     }
   }
 
