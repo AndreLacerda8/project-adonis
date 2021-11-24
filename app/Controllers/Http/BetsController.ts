@@ -2,6 +2,7 @@ import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Bet from 'App/Models/Bet'
+import Cart from 'App/Models/Cart'
 import Game from 'App/Models/Game'
 import User from 'App/Models/User'
 
@@ -44,6 +45,7 @@ export default class BetsController {
 
     public async store({ auth, request, response }: HttpContextContract){
         try {
+            const minPrice = await Cart.findByOrFail('config', 'min-cart-value')
             const bets = request.body()
             const games = await Game.all()
             const prices = games.map(game => {
@@ -55,7 +57,7 @@ export default class BetsController {
                 })[0].price
                 return acc + (+currentPrice)
             }, 0)
-            if(price < 30){
+            if(price < minPrice.value){
                 return response.status(422).json({ message: 'Minimum price (R$30,00) not reached' })
             }
             const formatedBets = bets.map(bet => {
