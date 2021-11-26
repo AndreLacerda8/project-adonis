@@ -1,4 +1,4 @@
-import Mail from '@ioc:Adonis/Addons/Mail'
+// import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { AuthContract } from '@ioc:Adonis/Addons/Auth'
 
@@ -9,6 +9,7 @@ import LoginUserValidator from 'App/Validators/LoginUserValidator'
 import moment from 'moment'
 import UsersPermission from 'App/Models/UsersPermission'
 import Permission from 'App/Models/Permission'
+import { Producer } from '../../../kafkaServices/Producer'
 
 export default class UsersController {
   private async createToken(auth: AuthContract, email: string,  password:string, response){
@@ -52,18 +53,20 @@ export default class UsersController {
         password
       })
 
-      await Mail.sendLater(message => {
-        message
-          .from('mail@example.com')
-          .to(email)
-          .subject('Bem vindo ao Lottery')
-          .html(`
-          <h1> Seja bem-vindo ${username} </h1>
-          <p>
-              Seu cadastro foi feito com sucesso, agora você pode aproveitar ao maximo nosso site
-          </p>`
-          )
-      })
+      // await Mail.sendLater(message => {
+      //   message
+      //     .from('mail@example.com')
+      //     .to(email)
+      //     .subject('Bem vindo ao Lottery')
+      //     .html(`
+      //     <h1> Seja bem-vindo ${username} </h1>
+      //     <p>
+      //         Seu cadastro foi feito com sucesso, agora você pode aproveitar ao maximo nosso site
+      //     </p>`
+      //     )
+      // })
+      Producer({ topic: 'new-user', messages: [{ value: email }] })
+
       const {token, user} = await this.createToken(auth, email, password, response)
       response.status(200).json({
         token,

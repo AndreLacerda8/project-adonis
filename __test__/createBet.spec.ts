@@ -61,8 +61,6 @@ test.group('Create Bet', () => {
             .send(bets)
             .auth(token, { type: 'bearer' })
 
-        console.log(response.body)
-
         assert.equal(response.status, 200)
     })
 })
