@@ -1,9 +1,11 @@
-import Mail from '@ioc:Adonis/Addons/Mail'
+// import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Bet from 'App/Models/Bet'
+import Cart from 'App/Models/Cart'
 import Game from 'App/Models/Game'
 import User from 'App/Models/User'
+import { Producer } from '../../../kafkaServices/Producer'
 
 export default class BetsController {
     public async index({ auth, response }: HttpContextContract){
@@ -44,6 +46,7 @@ export default class BetsController {
 
     public async store({ auth, request, response }: HttpContextContract){
         try {
+            const minPrice = await Cart.findByOrFail('config', 'min-cart-value')
             const bets = request.body()
             const games = await Game.all()
             const prices = games.map(game => {
@@ -55,7 +58,7 @@ export default class BetsController {
                 })[0].price
                 return acc + (+currentPrice)
             }, 0)
-            if(price < 30){
+            if(price < minPrice.value){
                 return response.status(422).json({ message: 'Minimum price (R$30,00) not reached' })
             }
             const formatedBets = bets.map(bet => {
@@ -66,17 +69,18 @@ export default class BetsController {
             const user = await User.find(formatedBets[0]['user_id'])
 
             if(user){
-                await Mail.sendLater(message => {
-                    message
-                        .from('mail@example.com')
-                        .to(user.email)
-                        .subject('Nova aposta')
-                        .html(`
-                        <h1> Você fez uma nova aposta </h1>
-                        <p>
-                            Você acabou de realizar novas apostas no valor de R$${price.toFixed(2).replace('.',',')}
-                        </p>`)
-                })
+                // await Mail.sendLater(message => {
+                //     message
+                //         .from('mail@example.com')
+                //         .to(user.email)
+                //         .subject('Nova aposta')
+                //         .html(`
+                //         <h1> Você fez uma nova aposta </h1>
+                //         <p>
+                //             Você acabou de realizar novas apostas no valor de R$${price.toFixed(2).replace('.',',')}
+                //         </p>`)
+                // })
+                Producer({topic: 'new-bet', messages: [{ value: user.email }]})
             }
 
             return response.status(200).json(

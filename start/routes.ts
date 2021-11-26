@@ -20,8 +20,13 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-Route.get('/', () => {
-  return 'Hello World'
+import { Producer } from '../kafkaServices/Producer'
+
+Route.get('/', async () => {
+  Producer({
+    topic: "test-topic",
+    messages: [{ value: 'andrlacerda@mail.com' }]
+  })
 })
 
 Route.group(() => {

@@ -1,7 +1,8 @@
-import Mail from '@ioc:Adonis/Addons/Mail'
+// import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import ForgotPasswordValidator from 'App/Validators/ForgotPasswordValidator'
+import { Producer } from '../../../kafkaServices/Producer'
 import moment from 'moment'
 
 const crypto = require('crypto')
@@ -15,17 +16,18 @@ export default class ForgotPasswordsController {
             user.tokenForgotPasswordCreatedAt = new Date()
             await user.save()
 
-            await Mail.sendLater(message => {
-                message
-                    .from('mail@example.com')
-                    .to(email)
-                    .subject('Recuperação de senha')
-                    .html(`
-                        <h1>Email para recuperação de senha</h1>
-                        <p>Para recuperar sua senha user o token: ${user.tokenForgotPassword}, ou acesse o link:</p>
-                        <a href="${request.input('redirect_url')}?token=${user.tokenForgotPassword}">Recuperar senha</a>
-                    `)
-            })
+            // await Mail.sendLater(message => {
+            //     message
+            //         .from('mail@example.com')
+            //         .to(email)
+            //         .subject('Recuperação de senha')
+            //         .html(`
+            //             <h1>Email para recuperação de senha</h1>
+            //             <p>Para recuperar sua senha user o token: ${user.tokenForgotPassword}, ou acesse o link:</p>
+            //             <a href="${request.input('redirect_url')}?token=${user.tokenForgotPassword}">Recuperar senha</a>
+            //         `)
+            // })
+            Producer({ topic: 'forgot-password', messages: [{ value: email }] })
 
             return response.status(200).json({ message: 'Password recovery email sent' })
         } catch(err) {
