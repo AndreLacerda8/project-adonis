@@ -20,15 +20,6 @@
 
 import Route from '@ioc:Adonis/Core/Route'
 
-import { Producer } from '../kafkaServices/Producer'
-
-Route.get('/', async () => {
-  Producer({
-    topic: "test-topic",
-    messages: [{ value: 'andrlacerda@mail.com' }]
-  })
-})
-
 Route.group(() => {
   Route.post('registered', 'UsersController.store')
   Route.post('login', 'UsersController.login')
