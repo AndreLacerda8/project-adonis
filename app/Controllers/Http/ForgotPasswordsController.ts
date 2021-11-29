@@ -27,7 +27,10 @@ export default class ForgotPasswordsController {
             //             <a href="${request.input('redirect_url')}?token=${user.tokenForgotPassword}">Recuperar senha</a>
             //         `)
             // })
-            Producer({ topic: 'forgot-password', messages: [{ value: email }] })
+            Producer({ topic: 'forgot-password', messages: [
+                { key: 'email', value: email },
+                { key: 'token_value', value: user.tokenForgotPassword }
+            ] })
 
             return response.status(200).json({ message: 'Password recovery email sent' })
         } catch(err) {

@@ -2,7 +2,8 @@ import Hash from '@ioc:Adonis/Core/Hash'
 import { DateTime } from 'luxon'
 import { BaseModel, beforeSave, column, HasMany, hasMany, ManyToMany, manyToMany } from '@ioc:Adonis/Lucid/Orm'
 import Bet from 'App/Models/Bet'
-import Permission from './Permission'
+// import Permission from './Permission'
+import UsersPermission from './UsersPermission'
 
 export default class User extends BaseModel {
   @column({ isPrimary: true })
@@ -39,6 +40,6 @@ export default class User extends BaseModel {
   @hasMany(() => Bet)
   public bet: HasMany<typeof Bet>
 
-  @manyToMany(() => Permission)
-  public permissions: ManyToMany<typeof Permission>
+  @manyToMany(() => UsersPermission)
+  public permissions: ManyToMany<typeof UsersPermission>
 }

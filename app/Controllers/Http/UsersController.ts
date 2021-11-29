@@ -65,7 +65,11 @@ export default class UsersController {
       //     </p>`
       //     )
       // })
-      Producer({ topic: 'new-user', messages: [{ value: email }] })
+
+      Producer({ topic: 'new-user', messages: [
+        { key: 'email', value: email },
+        { key: 'user_name', value: username }
+      ] })
 
       const {token, user} = await this.createToken(auth, email, password, response)
       response.status(200).json({

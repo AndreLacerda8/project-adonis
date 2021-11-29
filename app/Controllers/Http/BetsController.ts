@@ -80,7 +80,10 @@ export default class BetsController {
                 //             Você acabou de realizar novas apostas no valor de R$${price.toFixed(2).replace('.',',')}
                 //         </p>`)
                 // })
-                Producer({topic: 'new-bet', messages: [{ value: user.email }]})
+                Producer({topic: 'new-bet', messages: [
+                    { key: 'email', value: user.email },
+                    { key: 'bet_value', value: `R$${price.toFixed(2).replace('.',',')}`}
+                ]})
             }
 
             return response.status(200).json(
