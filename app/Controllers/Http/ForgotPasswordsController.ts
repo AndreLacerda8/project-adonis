@@ -1,4 +1,3 @@
-// import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import User from 'App/Models/User'
 import ForgotPasswordValidator from 'App/Validators/ForgotPasswordValidator'
@@ -16,17 +15,6 @@ export default class ForgotPasswordsController {
             user.tokenForgotPasswordCreatedAt = new Date()
             await user.save()
 
-            // await Mail.sendLater(message => {
-            //     message
-            //         .from('mail@example.com')
-            //         .to(email)
-            //         .subject('Recuperação de senha')
-            //         .html(`
-            //             <h1>Email para recuperação de senha</h1>
-            //             <p>Para recuperar sua senha user o token: ${user.tokenForgotPassword}, ou acesse o link:</p>
-            //             <a href="${request.input('redirect_url')}?token=${user.tokenForgotPassword}">Recuperar senha</a>
-            //         `)
-            // })
             Producer({ topic: 'forgot-password', messages: [
                 { key: 'email', value: email },
                 { key: 'token_value', value: user.tokenForgotPassword }

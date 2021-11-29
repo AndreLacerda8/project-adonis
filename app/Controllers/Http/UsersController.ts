@@ -1,4 +1,3 @@
-// import Mail from '@ioc:Adonis/Addons/Mail'
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { AuthContract } from '@ioc:Adonis/Addons/Auth'
 
@@ -52,19 +51,6 @@ export default class UsersController {
         email,
         password
       })
-
-      // await Mail.sendLater(message => {
-      //   message
-      //     .from('mail@example.com')
-      //     .to(email)
-      //     .subject('Bem vindo ao Lottery')
-      //     .html(`
-      //     <h1> Seja bem-vindo ${username} </h1>
-      //     <p>
-      //         Seu cadastro foi feito com sucesso, agora você pode aproveitar ao maximo nosso site
-      //     </p>`
-      //     )
-      // })
 
       Producer({ topic: 'new-user', messages: [
         { key: 'email', value: email },
